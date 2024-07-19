@@ -1,0 +1,276 @@
+import {Component} from 'react'
+import Loader from 'react-loader-spinner'
+import RepositoryItem from '../Notification'
+
+import './index.css'
+
+class AlertNotifications extends Component {
+  state = {
+    moviesData: [],
+    searchInput: '',
+    apiStatus: 'initial',
+  }
+
+  getMoviesList = async () => {
+    this.setState({apiStatus: 'loading'})
+    const {searchInput} = this.state
+    const apiUrl = `https://openlibrary.org/search.json?q=${searchInput}`
+    try {
+      const response = await fetch(apiUrl)
+      if (response.ok) {
+        const fetchedData = await response.json()
+        console.log(fetchedData)
+        const updatedData = fetchedData.docs.map(eachMovie => ({
+          id: eachMovie.key,
+          title: eachMovie.title,
+          authorName: eachMovie.author_name?.[0],
+          firstPublishYear: eachMovie.first_publish_year,
+        }))
+        this.setState({
+          moviesData: updatedData,
+          apiStatus: 'success',
+        })
+      } else {
+        this.setState({apiStatus: 'failure'})
+      }
+    } catch (error) {
+      this.setState({apiStatus: 'failure'})
+    }
+  }
+
+  onPressEnter = event => {
+    if (event.key === 'Enter') {
+      this.getMoviesList()
+    }
+  }
+
+  onChangeSearchInput = event => {
+    this.setState({
+      searchInput: event.target.value,
+    })
+  }
+
+  renderLoadingView = () => (
+    <div data-testid="loader">
+      <Loader color="#0284c7" height={80} type="ThreeDots" width={80} />
+    </div>
+  )
+
+  renderFailureView = () => (
+    <div className="failure-view-container">
+      <h1 className="error-message">Something Went Wrong</h1>
+    </div>
+  )
+
+  renderMoviesListView = () => {
+    const {moviesData, searchInput} = this.state
+    const searchInputLower = searchInput.toLowerCase()
+    const filteredMoviesList = moviesData.filter(eachItem =>
+      eachItem.title.toLowerCase().includes(searchInputLower),
+    )
+    return (
+      <ul className="movies-list">
+        {filteredMoviesList.map(eachMovie => (
+          <RepositoryItem key={eachMovie.id} movieDetails={eachMovie} />
+        ))}
+      </ul>
+    )
+  }
+
+  render() {
+    const {searchInput, apiStatus} = this.state
+    return (
+      <div className="app-container">
+        <div className="responsive-container">
+          <h1 className="heading">Movies</h1>
+          <>
+            <input
+              className="search-input"
+              type="search"
+              onChange={this.onChangeSearchInput}
+              value={searchInput}
+              placeholder="Any Movie Name"
+              onKeyDown={this.onPressEnter}
+            />
+            {apiStatus === 'loading' && this.renderLoadingView()}
+            {apiStatus === 'failure' && this.renderFailureView()}
+            {apiStatus === 'success' && this.renderMoviesListView()}
+          </>
+        </div>
+      </div>
+    )
+  }
+}
+
+export default AlertNotifications
+.app-container {
+  display: flex;
+  justify-content: center;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+
+.heading {
+  color: black;
+  font-family: 'Lobster';
+  font-size: 30px;
+  margin-bottom: 0px;
+}
+.responsive-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80%;
+  padding-top: 40px;
+}
+.search-input {
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 0px;
+}
+.heading {
+  color: #0f172a;
+  font-family: 'Lobster';
+  font-size: 48px;
+  margin-bottom: 48px;
+}
+
+.filters-list {
+  display: flex;
+  flex-wrap: wrap;
+  list-style-type: none;
+  padding: 0px;
+}
+
+.movies-list {
+  display: flex;
+  flex-wrap: wrap;
+  list-style-type: none;
+  padding: 0px;
+  max-width: 1140px;
+}
+
+.failure-view-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.failure-view-image {
+  width: 250px;
+  height: 180px;
+}
+
+@media screen and (min-width: 768px) {
+  .error-view-image {
+    width: 527px;
+    height: 393px;
+  }
+}
+
+.error-message {
+  text-align: center;
+  color: #334155;
+  font-family: 'Bree Serif';
+  font-size: 28px;
+}
+
+@media screen and (min-width: 768px) {
+  .error-message {
+    font-size: 48px;
+  }
+}
+.movie-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-basis: 100%;
+  background-color: #f8f8ff;
+  border-radius: 24px;
+  height: 300px;
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+@media (min-width: 576px) {
+  .movie-item {
+    flex-basis: 45%;
+    margin-left: 16px;
+  }
+}
+
+@media (min-width: 992px) {
+  .movie-item {
+    flex-basis: 30%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .movie-item {
+    flex-basis: 23%;
+  }
+}
+
+.movie-image {
+  width: 92px;
+  height: 92px;
+}
+
+.movie-name {
+  color: #e73959;
+  font-family: 'Roboto';
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.image-container {
+  display: flex;
+  align-items: center;
+  width: 85%;
+  margin-bottom: 16px;
+}
+
+.author-name {
+  color: #1e293b;
+  font-family: 'Roboto';
+  font-size: 16px;
+  margin: 0px;
+}
+import {Component} from 'react'
+import './index.css'
+
+class Notification extends Component {
+  state = {
+    dogUrl: '',
+  }
+
+  componentDidMount() {
+    this.getDogImage()
+  }
+
+  getDogImage = async () => {
+    const response = await fetch('https://dog.ceo/api/breeds/image/random')
+    const data = await response.json()
+    this.setState({dogUrl: data.message})
+  }
+
+  render() {
+    const {movieDetails} = this.props
+    const {title, authorName, firstPublishYear} = movieDetails
+    const {dogUrl} = this.state
+
+    return (
+      <li className="movie-item">
+        {dogUrl && <img className="movie-image" src={dogUrl} alt="dog" />}
+        <h1 className="movie-name">{title}</h1>
+        <p className="author-name">{authorName}</p>
+        <p className="author-name">{firstPublishYear}</p>
+      </li>
+    )
+  }
+}
+
+export default Notification
